@@ -1,0 +1,213 @@
+basePath: /
+definitions:
+  github_com_tien886_ShopNShip_order-service_internal_dto.CreateOrderRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.OrderItemDTO'
+        type: array
+    required:
+    - items
+    type: object
+  github_com_tien886_ShopNShip_order-service_internal_dto.OrderItemDTO:
+    properties:
+      item_name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+    required:
+    - item_name
+    - price
+    - quantity
+    type: object
+  github_com_tien886_ShopNShip_order-service_internal_dto.OrderResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.OrderItemDTO'
+        type: array
+      status:
+        type: string
+      total_price:
+        type: number
+      user_id:
+        type: integer
+    type: object
+  github_com_tien886_ShopNShip_order-service_internal_dto.UpdateStatusRequest:
+    properties:
+      status:
+        enum:
+        - PENDING
+        - PAID
+        - CANCELLED
+        - COMPLETED
+        type: string
+    required:
+    - status
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Order management service for ShopNShip microservices system.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: ShopNShip Order Service API
+  version: "1.0"
+paths:
+  /orders:
+    get:
+      description: Retrieve all orders belonging to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.OrderResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List orders for current user
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: Create a new order for the authenticated user
+      parameters:
+      - description: Order Items
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new order
+      tags:
+      - Orders
+  /orders/{id}:
+    get:
+      description: Retrieve a specific order by its UUID (only owner can access)
+      parameters:
+      - description: Order UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get an order by ID
+      tags:
+      - Orders
+  /orders/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of an order (PENDING | PAID | CANCELLED | COMPLETED)
+      parameters:
+      - description: Order UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New Status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_tien886_ShopNShip_order-service_internal_dto.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update order status
+      tags:
+      - Orders
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

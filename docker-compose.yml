@@ -40,7 +40,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=order_db
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://shopnship:shopnship@rabbitmq:5672/
     depends_on:
       - postgres-order
       - rabbitmq
@@ -58,7 +58,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=delivery_db
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_URL=amqp://shopnship:shopnship@rabbitmq:5672/
     depends_on:
       - postgres-delivery
       - rabbitmq
@@ -94,6 +94,9 @@ services:
   # Message Broker
   rabbitmq:
     image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: shopnship
+      RABBITMQ_DEFAULT_PASS: shopnship
     ports:
       - "5672:5672"
       - "15672:15672"
