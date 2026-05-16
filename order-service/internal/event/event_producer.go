@@ -81,6 +81,8 @@ func NewEventProducer(url string) (EventProducer, error) {
 }
 
 func (p *eventProducer) PublishOrderCreated(orderID string, userID uint) error {
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 3/7][PRODUCER] building OrderCreated payload order_id=%s user_id=%d", orderID, userID)
+
 	event := OrderEvent{
 		Event:     "OrderCreated",
 		OrderID:   orderID,
@@ -90,10 +92,12 @@ func (p *eventProducer) PublishOrderCreated(orderID string, userID uint) error {
 
 	body, err := json.Marshal(event)
 	if err != nil {
+		log.Printf("[FLOW][ORDER->DELIVERY][STEP 3/7][PRODUCER] payload marshal failed order_id=%s user_id=%d err=%v", orderID, userID, err)
 		return err
 	}
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 3/7][PRODUCER] payload ready order_id=%s size=%dB", orderID, len(body))
 
-	return p.ch.PublishWithContext(
+	err = p.ch.PublishWithContext(
 		context.Background(),
 		"order.events",  // exchange
 		"order.created", // routing key
@@ -104,6 +108,13 @@ func (p *eventProducer) PublishOrderCreated(orderID string, userID uint) error {
 			Body:        body,
 		},
 	)
+	if err != nil {
+		log.Printf("[FLOW][ORDER->DELIVERY][STEP 4/7][PRODUCER] publish failed order_id=%s err=%v", orderID, err)
+		return err
+	}
+
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 4/7][PRODUCER] publish success order_id=%s exchange=order.events routing_key=order.created", orderID)
+	return nil
 }
 
 func (p *eventProducer) Close() error {

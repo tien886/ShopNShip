@@ -35,6 +35,8 @@ func NewOrderService(repo repository.OrderRepository, producer event.EventProduc
 }
 
 func (s *orderService) CreateOrder(userID uint, req dto.CreateOrderRequest) (*model.Order, error) {
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 1/7][ORDER-SVC] create order request received user_id=%d item_count=%d", userID, len(req.Items))
+
 	var totalPrice float64
 	items := make([]model.OrderItem, len(req.Items))
 	orderID := uuid.New()
@@ -61,14 +63,18 @@ func (s *orderService) CreateOrder(userID uint, req dto.CreateOrderRequest) (*mo
 	if err := s.repo.Create(order); err != nil {
 		return nil, err
 	}
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 2/7][ORDER-SVC] order persisted order_id=%s user_id=%d status=%s total_price=%.2f", order.ID, order.UserID, order.Status, order.TotalPrice)
 
 	// Publish event
 	if s.producer != nil {
+		log.Printf("[FLOW][ORDER->DELIVERY][STEP 3/7][ORDER-SVC] publishing OrderCreated event order_id=%s user_id=%d", order.ID, order.UserID)
 		if err := s.producer.PublishOrderCreated(order.ID.String(), order.UserID); err != nil {
-			log.Printf("Warning: failed to publish OrderCreated event: %v", err)
+			log.Printf("[FLOW][ORDER->DELIVERY][STEP 4/7][ORDER-SVC] publish failed order_id=%s user_id=%d err=%v", order.ID, order.UserID, err)
+		} else {
+			log.Printf("[FLOW][ORDER->DELIVERY][STEP 4/7][ORDER-SVC] publish success order_id=%s user_id=%d exchange=order.events routing_key=order.created", order.ID, order.UserID)
 		}
 	} else {
-		log.Println("Warning: event producer is not initialized, skipping OrderCreated event")
+		log.Printf("[FLOW][ORDER->DELIVERY][STEP 3/7][ORDER-SVC] producer not initialized, skipping event order_id=%s user_id=%d", order.ID, order.UserID)
 	}
 
 	return order, nil

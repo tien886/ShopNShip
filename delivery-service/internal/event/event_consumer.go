@@ -120,23 +120,25 @@ func (c *EventConsumer) Start() error {
 	go func() {
 		log.Println("[Consumer] started, waiting for messages...")
 		for d := range msgs {
+			log.Printf("[FLOW][ORDER->DELIVERY][STEP 5/7][CONSUMER] message received delivery_tag=%d bytes=%d", d.DeliveryTag, len(d.Body))
+
 			var event OrderEvent
 			if err := json.Unmarshal(d.Body, &event); err != nil {
-				log.Printf("[Consumer] failed to unmarshal event: %v", err)
+				log.Printf("[FLOW][ORDER->DELIVERY][STEP 5/7][CONSUMER] unmarshal failed delivery_tag=%d err=%v", d.DeliveryTag, err)
 				d.Nack(false, false)
 				continue
 			}
 
-			log.Printf("[Consumer] received event: %s (order=%s)", event.Event, event.OrderID)
+			log.Printf("[FLOW][ORDER->DELIVERY][STEP 6/7][CONSUMER] dispatching to delivery service event=%s order_id=%s user_id=%d", event.Event, event.OrderID, event.UserID)
 
 			if err := c.svc.CreateDeliveryFromOrder(event.OrderID, event.UserID); err != nil {
-				log.Printf("[Consumer] failed to create delivery: %v", err)
+				log.Printf("[FLOW][ORDER->DELIVERY][STEP 6/7][CONSUMER] delivery creation failed order_id=%s err=%v requeue=true", event.OrderID, err)
 				d.Nack(false, true)
 				continue
 			}
 
 			d.Ack(false)
-			log.Printf("[Consumer] processed order %s successfully", event.OrderID)
+			log.Printf("[FLOW][ORDER->DELIVERY][STEP 7/7][CONSUMER] ack sent order_id=%s delivery_tag=%d", event.OrderID, d.DeliveryTag)
 		}
 		log.Println("[Consumer] message channel closed")
 	}()

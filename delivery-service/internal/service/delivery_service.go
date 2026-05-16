@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/tien886/ShopNShip/delivery-service/internal/model"
@@ -29,6 +30,8 @@ func NewDeliveryService(repo repository.DeliveryRepository) DeliveryService {
 }
 
 func (s *deliveryService) CreateDeliveryFromOrder(orderID string, userID uint) error {
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 6/7][DELIVERY-SVC] create delivery request received order_id=%s user_id=%d", orderID, userID)
+
 	parsedOrderID, err := uuid.Parse(orderID)
 	if err != nil {
 		return err
@@ -36,6 +39,7 @@ func (s *deliveryService) CreateDeliveryFromOrder(orderID string, userID uint) e
 
 	existing, _ := s.repo.FindByOrderID(parsedOrderID)
 	if existing != nil {
+		log.Printf("[FLOW][ORDER->DELIVERY][STEP 7/7][DELIVERY-SVC] delivery already exists order_id=%s delivery_id=%s (idempotent)", orderID, existing.ID)
 		return nil
 	}
 
@@ -46,7 +50,12 @@ func (s *deliveryService) CreateDeliveryFromOrder(orderID string, userID uint) e
 		Status:  model.DeliveryStatusPending,
 	}
 
-	return s.repo.Create(delivery)
+	if err := s.repo.Create(delivery); err != nil {
+		return err
+	}
+
+	log.Printf("[FLOW][ORDER->DELIVERY][STEP 7/7][DELIVERY-SVC] delivery persisted delivery_id=%s order_id=%s user_id=%d status=%s", delivery.ID, delivery.OrderID, delivery.UserID, delivery.Status)
+	return nil
 }
 
 func (s *deliveryService) GetDelivery(id uuid.UUID) (*model.Delivery, error) {
@@ -73,8 +82,8 @@ func (s *deliveryService) UpdateStatus(id uuid.UUID, status string) error {
 
 	newStatus := model.DeliveryStatus(status)
 	validTransitions := map[model.DeliveryStatus][]model.DeliveryStatus{
-		model.DeliveryStatusPending:  {model.DeliveryStatusAssigned, model.DeliveryStatusCancelled},
-		model.DeliveryStatusAssigned: {model.DeliveryStatusInTransit, model.DeliveryStatusCancelled},
+		model.DeliveryStatusPending:   {model.DeliveryStatusAssigned, model.DeliveryStatusCancelled},
+		model.DeliveryStatusAssigned:  {model.DeliveryStatusInTransit, model.DeliveryStatusCancelled},
 		model.DeliveryStatusInTransit: {model.DeliveryStatusDelivered, model.DeliveryStatusCancelled},
 	}
 

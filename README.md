@@ -299,6 +299,24 @@ curl -X POST http://localhost/auth/refresh \
   -d '{"refresh_token":"<refresh_token>"}'
 ```
 
+### 5.9 Study event flow logs (Order -> RabbitMQ -> Delivery)
+
+Run this in another terminal while creating a new order:
+
+```bash
+docker compose logs -f order-service delivery-service
+```
+
+Look for log lines containing `[FLOW][ORDER->DELIVERY]` and follow these steps:
+
+1. `STEP 1/7 [ORDER-SVC]` request enters order service.
+2. `STEP 2/7 [ORDER-SVC]` order is stored in order DB.
+3. `STEP 3/7 [ORDER-SVC]/[PRODUCER]` event payload is prepared.
+4. `STEP 4/7 [ORDER-SVC]/[PRODUCER]` event is published to `order.events` with `order.created`.
+5. `STEP 5/7 [CONSUMER]` delivery service receives RabbitMQ message.
+6. `STEP 6/7 [CONSUMER]/[DELIVERY-SVC]` message is handed to delivery business logic.
+7. `STEP 7/7 [DELIVERY-SVC]/[CONSUMER]` delivery row is saved and message is ACKed.
+
 ---
 
 ## 6. API Documentation (Scalar)
