@@ -5,6 +5,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// DefaultJWTSecret is the dev-only default. All three services MUST use the
+// same value (or the same overridden JWT_SECRET env var) so that tokens issued
+// by auth-service are accepted by order-service and delivery-service.
+const DefaultJWTSecret = "shopnship-dev-secret-change-me"
+
 type Config struct {
 	DBHost     string `mapstructure:"DB_HOST"`
 	DBPort     string `mapstructure:"DB_PORT"`
@@ -22,7 +27,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("DB_USER", "postgres")
 	viper.SetDefault("DB_PASSWORD", "postgres")
 	viper.SetDefault("DB_NAME", "auth_db")
-	viper.SetDefault("JWT_SECRET", "super-secret-key")
+	viper.SetDefault("JWT_SECRET", DefaultJWTSecret)
 	viper.SetDefault("SERVER_PORT", "8080")
 	// Read from .env file
 	viper.SetConfigName(".env")

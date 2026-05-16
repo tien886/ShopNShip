@@ -25,6 +25,19 @@ A learning-focused microservices project built with **Go**, **PostgreSQL**, **Ra
 - **Go 1.22+**
 - **Podman** (or Docker)
 
+### Configuration
+
+All three services share a single JWT signing secret — auth-service signs tokens, order-service and delivery-service verify them, so the value **must be identical** everywhere.
+
+Copy `.env.example` to `.env` to override the default secret:
+
+```bash
+cp .env.example .env
+# then edit JWT_SECRET to a strong random value before deploying
+```
+
+If `JWT_SECRET` is not set, all three services fall back to the same dev default (`shopnship-dev-secret-change-me`).
+
 ### Running the System
 
 You can use the provided **Makefile** to manage the services:

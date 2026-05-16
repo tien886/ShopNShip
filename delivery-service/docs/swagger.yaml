@@ -1,0 +1,164 @@
+basePath: /
+definitions:
+  dto.UpdateStatusRequest:
+    properties:
+      status:
+        enum:
+        - PENDING
+        - ASSIGNED
+        - IN_TRANSIT
+        - DELIVERED
+        - CANCELLED
+        type: string
+    required:
+    - status
+    type: object
+  model.Delivery:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      order_id:
+        type: string
+      status:
+        $ref: '#/definitions/model.DeliveryStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  model.DeliveryStatus:
+    enum:
+    - PENDING
+    - ASSIGNED
+    - IN_TRANSIT
+    - DELIVERED
+    - CANCELLED
+    type: string
+    x-enum-varnames:
+    - DeliveryStatusPending
+    - DeliveryStatusAssigned
+    - DeliveryStatusInTransit
+    - DeliveryStatusDelivered
+    - DeliveryStatusCancelled
+host: localhost:8082
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Delivery management service for ShopNShip microservices system.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: ShopNShip Delivery Service API
+  version: "1.0"
+paths:
+  /deliveries:
+    get:
+      description: Get all deliveries for the authenticated user (admin sees all)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Delivery'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List deliveries
+      tags:
+      - Deliveries
+  /deliveries/{id}:
+    get:
+      description: Retrieve a specific delivery by UUID
+      parameters:
+      - description: Delivery UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Delivery'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a delivery by ID
+      tags:
+      - Deliveries
+  /deliveries/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a delivery (PENDING | ASSIGNED | IN_TRANSIT
+        | DELIVERED | CANCELLED)
+      parameters:
+      - description: Delivery UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New Status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update delivery status
+      tags:
+      - Deliveries
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

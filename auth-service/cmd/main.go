@@ -1,7 +1,13 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	openapiui "github.com/PeterTakahashi/gin-openapi/openapiui"
 	"github.com/gin-gonic/gin"
@@ -90,9 +96,28 @@ func main() {
 		protected.GET("/me", authHandler.Me)
 	}
 
-	// Start server
-	log.Info().Msgf("Auth Service starting on port %s", cfg.ServerPort)
-	if err := r.Run(":" + cfg.ServerPort); err != nil {
-		log.Fatal().Err(err).Msg("Failed to start server")
+	srv := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
+		Handler: r,
 	}
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		log.Info().Msgf("Auth Service starting on port %s", cfg.ServerPort)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal().Err(err).Msg("Failed to start server")
+		}
+	}()
+
+	<-quit
+	log.Info().Msg("shutting down auth-service...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error().Err(err).Msg("server shutdown failed")
+	}
+	log.Info().Msg("auth-service stopped")
 }

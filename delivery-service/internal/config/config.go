@@ -18,22 +18,22 @@ type Config struct {
 	DBUser      string
 	DBPassword  string
 	DBName      string
-	JWTSecret   string
 	RabbitMQURL string
+	JWTSecret   string
 }
 
 func LoadConfig() (*Config, error) {
 	_ = godotenv.Load()
 
 	return &Config{
-		Port:        getEnv("PORT", "8081"),
+		Port:        getEnv("PORT", "8082"),
 		DBHost:      getEnv("DB_HOST", "localhost"),
 		DBPort:      getEnv("DB_PORT", "5432"),
 		DBUser:      getEnv("DB_USER", "postgres"),
 		DBPassword:  getEnv("DB_PASSWORD", "postgres"),
-		DBName:      getEnv("DB_NAME", "order_db"),
-		JWTSecret:   getEnv("JWT_SECRET", DefaultJWTSecret),
+		DBName:      getEnv("DB_NAME", "delivery_db"),
 		RabbitMQURL: getEnv("RABBITMQ_URL", "amqp://shopnship:shopnship@localhost:5672/"),
+		JWTSecret:   getEnv("JWT_SECRET", DefaultJWTSecret),
 	}, nil
 }
 
